@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Application</title>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            border: 2px solid #333;
+            width: 400px;
+            height: 600px;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #delivermessage {
+            padding: 15px;
+            height: 400px;
+            overflow-y: auto;
+            border-bottom: 2px solid #ddd;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin: 10px 0;
+        }
+
+        .input {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #fff;
+            min-height: 35px;
+            bottom: 0;
+            position: absolute;
+            width: 100%;
+        }
+
+        #messagebox {
+            width: 70%;
+            height: 25px;
+            border: 1px solid #ccc;
+            border-radius: 15px;
+            padding-left: 10px;
+        }
+
+        #sendbutton {
+            width: 28%;
+            height: 30px;
+            background-color: #4CAF50;
+            border: none;
+            color: #fff;
+            border-radius: 50px;
+            cursor: pointer;
+        }
+
+        #sendbutton:hover {
+            background-color: #45a049;
+        }
+
+        p {
+            margin: 5px 0;
+            padding: 8px;
+        }
+
+        p:nth-child(odd) {
+            background-color: #f2f2f2;
+        }
+
+        p:nth-child(even) {
+            background-color: #ddd;
+        }
+    </style>
+</head>
+
+<body>
+        <div class="container">
+            <div id="roomdet" style=" text-align: center;
+        margin-top: 15px;
+        border: 8px solid green;
+        border-radius: 20px;
+        font-weight: bold;display: none;"></div>
+            <div class="in" style="display: flex;
+        margin-top: 20px;justify-content: center;">
+                <input type="text" style="margin-left: 20px;
+            margin-right: 10px;" id="room" placeholder="Enter room ID">
+                <button id="join">JOIN</button>
+                <button id="exit" style="margin-left: 15px; display: none;">LEAVE</button>
+            </div>
+
+            <h1>Chatlyy</h1>
+
+
+            <div id="userid" style="text-align: center; font-weight: bolder;">
+
+            </div>
+            <div id="delivermessage"></div>
+            <div class="input" >
+                <input type="text" id="messagebox" placeholder="Type your message">
+                <button id="sendbutton">Send</button>
+            </div>
+        </div>
+        
+    
+
+    <script>
+        const inputmessage = document.getElementById("messagebox");
+        const sendbtn = document.getElementById("sendbutton");
+        const area = document.getElementById('delivermessage');
+        const userid = document.getElementById('userid')
+        const room = document.getElementById('room')
+        const join = document.getElementById('join')
+        const exit = document.getElementById('exit');
+        const roomarea = document.getElementById('roomdet')
+        const socket = io();
+        socket.on('connect', () => {
+            userid.innerHTML = `User ID: ${socket.id}`;
+        });
+
+
+        join.addEventListener('click', (e) => {
+            const roomvalue = room.value
+            const message = inputmessage.value
+            roomarea.style.display = "block"
+            exit.style.display = 'block'
+
+            roomarea.innerText = `joined room ${roomvalue}`;
+            if (roomvalue.trim() === "") {
+                socket.emit("message", { message: message });
+            } else {
+                socket.emit("joinroom", { message: message, roomno: roomvalue });
+            }
+
+        })
+
+
+        exit.addEventListener('click', (e) => {
+            const roomvalue = room.value;
+            room.value = ""
+            socket.emit('exitRoom', { roomno: roomvalue });
+            roomarea.style.display = "none";
+
+        });
+
+
+        function scrollToBottom() {
+
+            area.scrollTop = area.scrollHeight - area.clientHeight;
+        }
+
+
+        sendbtn.addEventListener("click", () => {
+            const roomvalue = room.value
+            const message = inputmessage.value.trim();
+
+            if (message !== "") {
+                if (roomvalue.trim() === "") {
+                    socket.emit("message", { message: message });
+                }
+                else {
+                    socket.emit("message", { message: message, roomno: roomvalue });
+                }
+                inputmessage.value = "";
+            }
+
+        });
+
+        socket.on("message", (data) => {
+            const p = document.createElement('p');
+            p.textContent = `${data.id}-----${data.message}`;
+            area.appendChild(p);
+            scrollToBottom();
+        });
+
+    </script>
+</body>
+
+</html>
